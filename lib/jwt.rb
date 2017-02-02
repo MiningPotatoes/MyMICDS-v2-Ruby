@@ -12,7 +12,7 @@ end
 class MyMICDS
   module JWT
     class Middleware
-      def initialize(app, db: )
+      def initialize(app, db:)
         @app = app
         @db = db
       end

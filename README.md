@@ -12,6 +12,12 @@ You also have to set up a local config file on every machine. This file contains
 ## Running
 Just run the `rackup` command in this directory (provided you have `rack` installed) to start the server.
 
+## Style
+- If a method queries the database *at all*, `yield` to a block instead of `return`ing a value.
+- When `yield`ing, make sure to add a `block_given?` clause to deal with whatever happens if a block isn't given.
+- Write as few `raise` statements as possible.
+  - A good way to do this is to reuse statements made in other methods that are being called.
+
 ## TODO
 - `rdoc` file documentation
 - [RAML](http://raml.org/) API documentation
