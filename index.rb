@@ -10,14 +10,15 @@ require 'yaml'
 Mongo::Logger.logger.level = ::Logger::FATAL
 
 class MyMICDS < Sinatra::Base
+	CONFIG = YAML.load_file(File.expand_path('../config.yml', __FILE__))
+
 	configure do
 		# this can be loaded in multiple files, since the libs sometimes need it
-		config = YAML.load_file(File.expand_path('../config.yml', __FILE__))
-		set :db, Mongo::Client.new(config['mongodb']['uri'])
+		set :db, Mongo::Client.new(CONFIG['mongodb']['uri'])
 		disable :protection
 
 		require_relative 'lib/jwt'
-		use JWTMiddleware
+		use JWT::Middleware, db: settings.db
 
 		use Rack::Parser
 

@@ -8,7 +8,7 @@ class MyMICDS
 
 		module_function
 
-		def get_user(db, user, &block)
+		def get_user(db, user)
 			return unless block_given?
 			raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
 			raise TypeError, 'invalid username' unless user.is_a?(String)
@@ -19,11 +19,11 @@ class MyMICDS
 			if user_docs.empty?
 				raise UserNotFoundError, "user #{user} not found in database"
 			else
-				block.call(user_docs[0].transform_keys {|k| k.underscore.to_sym})
+				yield user_docs[0].transform_keys {|k| k.underscore.to_sym}
 			end
 		end
 
-		def get_info(db, user, private_info, &block)
+		def get_info(db, user, private_info)
 			return unless block_given?
 			raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
 
@@ -47,11 +47,12 @@ class MyMICDS
 					end
 				end
 
-				block.call(user_info)
+				yield user_info
 			end
 		end
 
 		def change_info(db, user, info)
+			raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
 			raise TypeError, 'invalid update information' unless info.is_a?(Hash)
 			return if info.empty?
 

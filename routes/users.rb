@@ -7,26 +7,26 @@ class MyMICDS
 		def self.registered(app)
 			app.namespace '/user' do
 				get '/grad-year-to-grade' do
-					json({grade: MyMICDS::Users.grad_year_to_grade(params['year'])})
+					json({grade: Users.grad_year_to_grade(params['year'])})
 				end
 
 				get '/grade-to-grad-year' do
-					json({grade: MyMICDS::Users.grade_to_grad_year(params['grade'])})
+					json({grade: Users.grade_to_grad_year(params['grade'])})
 				end
 
 				get '/school-ends' do
-					json({ends: MyMICDS::Users.school_ends.iso8601})
+					json({ends: Users.school_ends.iso8601})
 				end
 
 				get '/grade-range' do
-					grad_years = -1.upto(12).map {|i| MyMICDS::Users.grade_to_grad_year(i)}
+					grad_years = -1.upto(12).map {|i| Users.grade_to_grad_year(i)}
 					json({gradYears: grad_years.reverse}) # return the most recent ones first
 				end
 
 				get '/info' do
 					result = {}
 					begin
-						MyMICDS::Users.get_info(settings.db, request.env[:user], true) do |info|
+						Users.get_info(settings.db, request.env[:user], true) do |info|
 							result[:error] = nil
 							result[:user_info] = info
 						end
@@ -48,8 +48,8 @@ class MyMICDS
 					end
 					info[:grad_year] = params['teacher'] ? nil : params['gradYear'].to_i
 
-					begin # TODO: change to JWT
-						MyMICDS::Users.change_info(settings.db, request.env[:user], info)
+					begin
+						Users.change_info(settings.db, request.env[:user], info)
 						result[:error] = nil
 					rescue => err
 						result[:error] = err.message
