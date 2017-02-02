@@ -10,27 +10,27 @@ require 'yaml'
 Mongo::Logger.logger.level = ::Logger::FATAL
 
 class MyMICDS < Sinatra::Base
-	CONFIG = YAML.load_file(File.expand_path('../config.yml', __FILE__))
+  CONFIG = YAML.load_file(File.expand_path('../config.yml', __FILE__))
 
-	configure do
-		# this can be loaded in multiple files, since the libs sometimes need it
-		set :db, Mongo::Client.new(CONFIG['mongodb']['uri'])
-		disable :protection
+  configure do
+    # this can be loaded in multiple files, since the libs sometimes need it
+    set :db, Mongo::Client.new(CONFIG['mongodb']['uri'])
+    disable :protection
 
-		require_relative 'lib/jwt'
-		use JWT::Middleware, db: settings.db
+    require_relative 'lib/jwt'
+    use JWT::Middleware, db: settings.db
 
-		use Rack::Parser
+    use Rack::Parser
 
-		%w(
-			users
-		).each do |file|
-			require_relative "routes/#{file}"
-		end
-		register Sinatra::Namespace
-		register Routes
-	end
+    %w(
+      users
+    ).each do |file|
+      require_relative "routes/#{file}"
+    end
+    register Sinatra::Namespace
+    register Routes
+  end
 
-	# all errors should be handled in the routes
-	# and information should be returned accordingly
+  # all errors should be handled in the routes
+  # and information should be returned accordingly
 end
