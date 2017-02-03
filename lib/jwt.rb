@@ -76,8 +76,6 @@ class MyMICDS
     end
 
     def generate(db, user, remember_me)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
-
       user_doc = Users.get(db, user)
 
       # default scopes
@@ -120,7 +118,9 @@ class MyMICDS
     end
 
     def revoked?(db, payload, jwt)
-      return unless payload.is_a?(Hash) && block_given?
+      # even though #blacklisted? already has a db type check, we access the db before we call it
+      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+      return unless payload.is_a?(Hash)
 
       db[:users].update_one({user: payload['user']}, '$currentDate' => {lastVisited: true})
 
