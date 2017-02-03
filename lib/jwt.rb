@@ -41,10 +41,8 @@ class MyMICDS
             true,
             opts
           )
-
-          JWT.revoked?(@db, payload, token) do |revoked|
-            raise ::JWT::TokenRevoked, 'token has been revoked' if revoked
-          end
+          
+          raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(@db, payload, token)
 
           env[:scopes] = payload['scopes']
           env[:user] = payload['user']
@@ -71,43 +69,39 @@ class MyMICDS
     module_function
 
     def blacklisted?(db, jwt)
-      return unless block_given?
       raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
       raise TypeError, 'invalid JWT' unless jwt.is_a?(String)
 
-      # this is in a block since it's a database query
-      # and so we can check for errors before returning
-      yield !db[:JWTBlacklist].find(jwt: jwt).to_a.empty?
+      !db[:JWTBlacklist].find(jwt: jwt).to_a.empty?
     end
 
     def generate(db, user, remember_me)
-      return unless block_given?
       raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
 
-      Users.get(db, user) do |user_doc|
-        # default scopes
-        scopes = {pleb: true}
+      user_doc = Users.get(db, user)
 
-        if user_doc['scopes'].is_a?(Array)
-          user_doc['scopes'].each {|scope| scopes[scope] = true}
-        end
+      # default scopes
+      scopes = {pleb: true}
 
-        yield ::JWT.encode(
-          {
-            user: user,
-            scopes: scopes
-          },
-          CONFIG['jwt']['secret'],
-          {
-            aud: CONFIG['hosted_on'],
-            exp: Time.now.to_i + (remember_me ? 30.days : 12.hours),
-            iat: Time.now.to_i,
-            iss: CONFIG['hosted_on'],
-            sub: 'MyMICDS API'
-          },
-          'HS256'
-        )
+      if user_doc['scopes'].is_a?(Array)
+        user_doc['scopes'].each {|scope| scopes[scope] = true}
       end
+
+      ::JWT.encode(
+        {
+          user: user,
+          scopes: scopes
+        },
+        CONFIG['jwt']['secret'],
+        {
+          aud: CONFIG['hosted_on'],
+          exp: Time.now.to_i + (remember_me ? 30.days : 12.hours),
+          iat: Time.now.to_i,
+          iss: CONFIG['hosted_on'],
+          sub: 'MyMICDS API'
+        },
+        'HS256'
+      )
     end
 
     def revoke(db, payload, jwt)
@@ -122,18 +116,15 @@ class MyMICDS
         revoked: Time.now
       })
 
-      # see Users::change_info
       nil
     end
 
     def revoked?(db, payload, jwt)
       return unless payload.is_a?(Hash) && block_given?
 
-      blacklisted?(db, jwt) do |blacklisted|
-        db[:users].update_one({user: payload['user']}, '$currentDate' => {lastVisited: true})
+      db[:users].update_one({user: payload['user']}, '$currentDate' => {lastVisited: true})
 
-        yield blacklisted
-      end
+      blacklisted?(db, jwt)
     end
   end
 end
