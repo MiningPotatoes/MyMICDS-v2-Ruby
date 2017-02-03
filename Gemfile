@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 gem 'activesupport'
-gem 'bcrypt'
+gem 'bcrypt', platforms: :ruby
 gem 'jwt'
 gem 'mail'
 gem 'mongo'

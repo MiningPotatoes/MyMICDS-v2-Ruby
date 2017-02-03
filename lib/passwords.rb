@@ -13,11 +13,10 @@ class MyMICDS
     module_function
 
     def matches?(db, user, password)
-      return unless block_given?
       raise TypeError, 'invalid password' unless password.is_a?(String)
 
       user_doc = Users.get(db, user)
-      return BCrypt::Password.new(user_doc['password']) == password, user_doc['confirmed']
+      return BCrypt::Password.new(user_doc[:password]) == password, user_doc[:confirmed]
     end
 
     def change(db, user, old_pass, new_pass)
@@ -26,7 +25,9 @@ class MyMICDS
       raise TypeError, 'invalid new password' unless new_pass.is_a?(String)
 
       hashed = BCrypt::Password.create(new_pass)
-      raise MismatchError, 'passwords do not match' unless matches?(db, user, old_pass)[0]
+
+      matches, confirmed = matches?(db, user, old_pass)
+      raise MismatchError, 'passwords do not match' unless matches
 
       db[:users].update_one(
         {user: user},
