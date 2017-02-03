@@ -27,8 +27,8 @@ class MyMICDS
 
           opts = {
             algorithm: 'HS256',
-            aud: MyMICDS::CONFIG['hosted_on'],
-            iss: MyMICDS::CONFIG['hosted_on'],
+            aud: CONFIG['hosted_on'],
+            iss: CONFIG['hosted_on'],
             leeway: 30,
             sub: 'MyMICDS API'
           }
@@ -37,7 +37,7 @@ class MyMICDS
 
           payload, header = ::JWT.decode(
             token,
-            MyMICDS::CONFIG['jwt']['secret'],
+            CONFIG['jwt']['secret'],
             true,
             opts
           )
@@ -97,12 +97,12 @@ class MyMICDS
             user: user,
             scopes: scopes
           },
-          MyMICDS::CONFIG['jwt']['secret'],
+          CONFIG['jwt']['secret'],
           {
-            aud: MyMICDS::CONFIG['hosted_on'],
+            aud: CONFIG['hosted_on'],
             exp: Time.now.to_i + (remember_me ? 30.days : 12.hours),
             iat: Time.now.to_i,
-            iss: MyMICDS::CONFIG['hosted_on'],
+            iss: CONFIG['hosted_on'],
             sub: 'MyMICDS API'
           },
           'HS256'
