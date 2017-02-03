@@ -8,11 +8,10 @@ class MyMICDS
 
     module_function
 
-    def get_user(db, user)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+    def get_user(user)
       raise TypeError, 'invalid username' unless user.is_a?(String)
 
-      userdata = db[:users]
+      userdata = DB[:users]
       user_docs = userdata.find(user: user).to_a
 
       raise UserNotFoundError, "user #{user} not found in database" if user_docs.empty?
@@ -20,11 +19,11 @@ class MyMICDS
       user_docs[0].transform_keys {|k| k.underscore.to_sym}
     end
 
-    def get_info(db, user, private_info)
+    def get_info(user, private_info)
       # since Ruby doesn't have an overall Boolean class, we have to use this hack to check if boolean
       private_info = false unless !!private_info == private_info
 
-      user_doc = get_user(db, user)
+      user_doc = get_user(user)
 
       # move values over from database and format them
       user_info = %i(user first_name last_name grad_year).each_with_object({}) do |key, memo|
@@ -45,8 +44,7 @@ class MyMICDS
       user_info
     end
 
-    def change_info(db, user, info)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+    def change_info(user, info)
       raise TypeError, 'invalid update information' unless info.is_a?(Hash)
       return if info.empty?
 
@@ -70,7 +68,7 @@ class MyMICDS
         end
       end
 
-      db[:users].update_one(
+      DB[:users].update_one(
         {user: user},
         {'$set' => set},
         {upsert: true}

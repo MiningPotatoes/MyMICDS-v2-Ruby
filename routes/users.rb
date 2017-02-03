@@ -3,7 +3,7 @@ require 'time'
 require_relative '../lib/users'
 
 class MyMICDS
-  module Routes
+  module UsersRoutes
     def self.registered(app)
       app.namespace '/user' do
         get '/grad-year-to-grade' do
@@ -25,9 +25,10 @@ class MyMICDS
 
         get '/info' do
           result = {}
+
           begin
             result[:error] = nil
-            result[:user_info] = Users.get_info(settings.db, request.env[:user], true)
+            result[:user_info] = Users.get_info(request.env[:user], true)
           rescue => err
             result[:error] = err.message
             result[:user_info] = nil
@@ -47,7 +48,7 @@ class MyMICDS
           info[:grad_year] = params['teacher'] ? nil : params['gradYear'].to_i
 
           begin
-            Users.change_info(settings.db, request.env[:user], info)
+            Users.change_info(request.env[:user], info)
             result[:error] = nil
           rescue => err
             result[:error] = err.message

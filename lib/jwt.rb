@@ -12,9 +12,8 @@ end
 class MyMICDS
   module JWT
     class Middleware
-      def initialize(app, db:)
+      def initialize(app)
         @app = app
-        @db = db
       end
 
       def call(env)
@@ -42,7 +41,7 @@ class MyMICDS
             opts
           )
           
-          raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(@db, payload, token)
+          raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(payload, token)
 
           env[:scopes] = payload['scopes']
           env[:user] = payload['user']
@@ -51,13 +50,7 @@ class MyMICDS
         @app.call(env)
       rescue ArgumentError => err
         handle_err(err, 400)
-      rescue ::JWT::ExpiredSignature,
-             ::JWT::InvalidAudError,
-             ::JWT::InvalidIatError,
-             ::JWT::InvalidIssuerError,
-             ::JWT::TokenRevoked => err
-        handle_err(err, 403)
-      rescue ::JWT::DecodeError => err # because most of the above are subclasses of DecodeError, this has to come last
+      rescue ::JWT::DecodeError => err
         handle_err(err, 401)
       end
 
@@ -68,15 +61,14 @@ class MyMICDS
 
     module_function
 
-    def blacklisted?(db, jwt)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+    def blacklisted?(jwt)
       raise TypeError, 'invalid JWT' unless jwt.is_a?(String)
 
-      !db[:JWTBlacklist].find(jwt: jwt).to_a.empty?
+      !DB[:JWTBlacklist].find(jwt: jwt).to_a.empty?
     end
 
-    def generate(db, user, remember_me)
-      user_doc = Users.get(db, user)
+    def generate(user, remember_me)
+      user_doc = Users.get(user)
 
       # default scopes
       scopes = {pleb: true}
@@ -102,12 +94,11 @@ class MyMICDS
       )
     end
 
-    def revoke(db, payload, jwt)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+    def revoke(payload, jwt)
       raise TypeError, 'invalid payload' unless payload.is_a?(Hash)
       raise TypeError, 'invalid JWT' unless jwt.is_a?(String)
 
-      db[:JWTBlacklist].insert_one({
+      DB[:JWTBlacklist].insert_one({
         user: payload['user'],
         jwt: jwt,
         expires: Time.at(payload['exp']),
@@ -117,14 +108,12 @@ class MyMICDS
       nil
     end
 
-    def revoked?(db, payload, jwt)
-      # even though #blacklisted? already has a db type check, we access the db before we call it
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
+    def revoked?(payload, jwt)      
       return unless payload.is_a?(Hash)
 
-      db[:users].update_one({user: payload['user']}, '$currentDate' => {lastVisited: true})
+      DB[:users].update_one({user: payload['user']}, '$currentDate' => {lastVisited: true})
 
-      blacklisted?(db, jwt)
+      blacklisted?(jwt)
     end
   end
 end

@@ -20,24 +20,24 @@ class MyMICDS
 
     module_function
 
-    def matches?(db, user, password)
+    def matches?(user, password)
       raise TypeError, 'invalid password' unless password.is_a?(String)
 
-      user_doc = Users.get(db, user)
+      user_doc = Users.get(user)
       return BCrypt::Password.new(user_doc[:password]) == password, user_doc[:confirmed]
     end
 
-    def change(db, user, old_pass, new_pass)
+    def change(user, old_pass, new_pass)
       # even though #matches? already has a password type check,
       # the message isn't informative enough
       raise TypeError, 'invalid old password' unless old_pass.is_a?(String)
       raise ArgumentError, 'password blacklisted' if BLACKLIST.include?(old_pass)
       raise TypeError, 'invalid new password' unless new_pass.is_a?(String)
 
-      matches, confirmed = matches?(db, user, old_pass)
+      matches, confirmed = matches?(user, old_pass)
       raise MismatchError, 'passwords do not match' unless matches
 
-      db[:users].update_one(
+      DB[:users].update_one(
         {user: user},
         '$set' => {password: BCrypt::Password.create(new_pass)},
         '$currentDate' => {lastPasswordChange: true}
@@ -46,12 +46,12 @@ class MyMICDS
       nil
     end
 
-    def send_reset_email(db, user)
-      user_doc = Users.get(db, user)
+    def send_reset_email(user)
+      user_doc = Users.get(user)
 
       reset_hash = SecureRandom.hex(16)
 
-      db[:users].update_one(
+      DB[:users].update_one(
         {user: user_doc[:user]},
         {'$set' => {passwordChangeHash: Digest::SHA256.hexdigest(reset_hash)}},
         {upsert: true}
@@ -71,12 +71,12 @@ class MyMICDS
       nil
     end
 
-    def reset(db, user, password, reset_hash)
+    def reset(user, password, reset_hash)
       raise TypeError, 'invalid password' unless password.is_a?(String)
       raise ArgumentError, 'password blacklisted' if BLACKLIST.include?(password)
       raise TypeError, 'invalid reset hash' unless reset_hash.is_a?(String)
 
-      user_doc = Users.get(db, user)
+      user_doc = Users.get(user)
 
       db_hash = user_doc[:password_change_hash]
       hash_check = Digest::SHA256.hexdigest(reset_hash)
@@ -84,7 +84,7 @@ class MyMICDS
       raise EmailNotSentError, 'password reset email never sent' if !db_hash.is_a?(String) || db_hash.nil?
       raise MismatchError, 'password reset hashes do not match' unless ActiveSupport::SecurityUtils.secure_compare(db_hash, hash_check)
 
-      db[:users].update_one(
+      DB[:users].update_one(
         {user: user_doc[:user]},
         '$set' => {
           password: BCrypt::Password.create(password),
