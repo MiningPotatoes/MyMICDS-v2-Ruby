@@ -1,6 +1,7 @@
 source "https://rubygems.org"
 
 gem 'activesupport'
+gem 'bcrypt'
 gem 'jwt'
 gem 'mail'
 gem 'mongo'
