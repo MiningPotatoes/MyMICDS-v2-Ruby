@@ -54,10 +54,10 @@ class MyMICDS
       rescue ArgumentError => err
         handle_err(err, 400)
       rescue ::JWT::ExpiredSignature,
-           ::JWT::InvalidAudError,
-           ::JWT::InvalidIatError,
-           ::JWT::InvalidIssuerError,
-           ::JWT::TokenRevoked => err
+             ::JWT::InvalidAudError,
+             ::JWT::InvalidIatError,
+             ::JWT::InvalidIssuerError,
+             ::JWT::TokenRevoked => err
         handle_err(err, 403)
       rescue ::JWT::DecodeError => err # because most of the above are subclasses of DecodeError, this has to come last
         handle_err(err, 401)

@@ -1,4 +1,6 @@
+require 'erb'
 require 'mail'
+require 'ostruct'
 require 'uri'
 
 module URI
@@ -24,7 +26,7 @@ class MyMICDS
 
       mailer = URI(CONFIG['email']['uri'])
 
-      Mail.defaults do
+      ::Mail.defaults do
         delivery_method :smtp, {
           address: mailer.host,
           authentication: 'plain',
@@ -36,12 +38,25 @@ class MyMICDS
 
       user_str = users.is_a?(Array) ? users.join(',') : users
 
-      Mail.deliver do
+      ::Mail.deliver do
+        content_type 'text/html; charset=UTF-8'
         from "#{CONFIG['email']['from_name']} <#{CONFIG['email']['from_email']}>"
         to user_str
         subject message[:subject]
         body message[:html]
       end
+    end
+
+    def send_html(users, subject, file, data = {})
+      raise TypeError, 'invalid mail file path' unless file.is_a?(String)
+      data = {} unless data.is_a?(Hash)
+
+      send(
+        users,
+        subject: subject,
+        # little hack to put hash values into an ERB template
+        html: ERB.new(File.read(file)).result(OpenStruct.new(data).instance_eval {binding})
+      )
     end
   end
 end

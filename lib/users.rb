@@ -130,7 +130,7 @@ class MyMICDS
       'middleschool'
     end
 
-    def last_friday_may(year = nil)
+    def last_friday_may(year = Time.now.year)
       year = Time.now.year unless year.is_a?(Integer)
 
       last_day_of_may = Time.new(year, 5)
