@@ -47,7 +47,7 @@ class MyMICDS
       end
     end
 
-    def send_html(users, subject, file, data = {})
+    def send_erb(users, subject, file, data = {})
       raise TypeError, 'invalid mail file path' unless file.is_a?(String)
       data = {} unless data.is_a?(Hash)
 

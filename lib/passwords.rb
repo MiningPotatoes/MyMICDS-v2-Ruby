@@ -1,4 +1,7 @@
 require 'bcrypt'
+require 'digest'
+require 'securerandom'
+require_relative 'mail'
 require_relative 'users'
 
 class MyMICDS
@@ -36,6 +39,36 @@ class MyMICDS
       )
 
       nil
+    end
+
+    def send_reset_email(db, user)
+      user_doc = Users.get(db, user)
+
+      reset_hash = SecureRandom.hex(16)
+      reset_hashed_hash = Digest::SHA256.hexdigest(reset_hash)
+
+      db[:users].update_one(
+        {user: user_doc[:user]},
+        {'$set' => {passwordChangeHash: reset_hashed_hash}},
+        {upsert: true}
+      )
+
+      Mail.send_erb(
+        user_doc[:user] + '@micds.org',
+        'Change your password',
+        File.expand_path('../../erb/password.erb', __FILE__),
+        {
+          first_name: user_doc[:first_name],
+          last_name: user_doc[:last_name],
+          password_link: "https://mymicds.net/reset-password/#{user_doc[:user]}/#{reset_hash}"
+        }
+      )
+
+      nil
+    end
+
+    def reset(db, user, password, hash)
+      # TODO
     end
   end
 end
