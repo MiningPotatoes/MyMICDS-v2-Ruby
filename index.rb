@@ -31,6 +31,10 @@ class MyMICDS < Sinatra::Base
     end
   end
 
-  # all errors should be handled in the routes
-  # and information should be returned accordingly
+  error Mongo::Error do    
+    json({error: 'There was an error accessing the database!'})
+  end
+
+  # all errors except Mongo::Error should be handled in the routes
+  # and information and status codes should be returned accordingly
 end

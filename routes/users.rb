@@ -1,5 +1,6 @@
 require 'active_support/core_ext/string/inflections'
 require 'time'
+
 require_relative '../lib/users'
 
 class MyMICDS
@@ -28,10 +29,13 @@ class MyMICDS
 
           begin
             result[:error] = nil
-            result[:user_info] = Users.get_info(request.env[:user], true)
+            result[:user_info] = Users.get_info(request.env[:jwt]['user'], true)
+          rescue Mongo::Error
+            raise
           rescue => err
             result[:error] = err.message
             result[:user_info] = nil
+            status 400
           end
 
           json(result)
@@ -48,10 +52,13 @@ class MyMICDS
           info[:grad_year] = params['teacher'] ? nil : params['gradYear'].to_i
 
           begin
-            Users.change_info(request.env[:user], info)
+            Users.change_info(request.env[:jwt]['user'], info)
             result[:error] = nil
+          rescue Mongo::Error
+            raise
           rescue => err
             result[:error] = err.message
+            status 400
           end
 
           json(result)

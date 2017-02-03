@@ -1,3 +1,5 @@
+require 'active_support/core_ext/string/inflections'
+
 require_relative '../lib/auth'
 
 class MyMICDS
@@ -14,14 +16,15 @@ class MyMICDS
             result[:success] = false
             status 400
           else
-            remember_me = !params['remember'].nil?
+            remember_me = !params['remember']
 
             begin
               result[:error] = nil
               result[:jwt] = Auth.login(params['user'], params['password'], remember_me)
               result[:message] = 'Success!'
               result[:success] = true
-              status 200
+            rescue Mongo::Error
+              raise
             rescue Auth::Error, Passwords::Error => err
               result[:error] = nil
               result[:jwt] = nil
@@ -35,6 +38,60 @@ class MyMICDS
               result[:success] = nil
               status 403
             end
+          end
+
+          json(result)
+        end
+
+        post '/logout' do
+          result = {}
+
+          begin
+            JWT.revoke(request.env[:jwt], request.env['HTTP_AUTHORIZATION']&.slice(7..-1))
+            result[:error] = nil
+          rescue Mongo::Error
+            raise
+          rescue => err
+            result[:error] = err.message
+            status 400
+          end
+
+          json(result)
+        end
+
+        post '/register' do
+          result = {}
+          user = {}
+
+          %w(user password firstName lastName gradYear).each do |key|
+            user[key.underscore.to_sym] = (key == 'gradYear' ? params[key].to_i : params[key])
+          end
+          user[:grad_year] = nil if params['teacher']
+
+          begin
+            Auth.register(user)
+            result[:error] = nil
+            status 201
+          rescue MongoError
+            raise
+          rescue => err
+            result[:error] = err.message
+            status 400
+          end
+
+          json(result)
+        end
+
+        post '/confirm' do
+          result = {}
+
+          begin
+            Auth.confirm(params['user'], params['hash'])
+          rescue Mongo::Error
+            raise
+          rescue => err
+            result[:error] = err.message
+            status 400
           end
 
           json(result)

@@ -11,9 +11,7 @@ class MyMICDS
     def get_user(user)
       raise TypeError, 'invalid username' unless user.is_a?(String)
 
-      userdata = DB[:users]
-      user_docs = userdata.find(user: user).to_a
-
+      user_docs = DB[:users].find(user: user).to_a
       raise UserNotFoundError, "user #{user} not found in database" if user_docs.empty?
 
       user_docs[0].transform_keys {|k| k.underscore.to_sym}

@@ -43,8 +43,7 @@ class MyMICDS
           
           raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(payload, token)
 
-          env[:scopes] = payload['scopes']
-          env[:user] = payload['user']
+          env[:jwt] = payload
         end
 
         @app.call(env)

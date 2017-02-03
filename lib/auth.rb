@@ -30,6 +30,8 @@ class MyMICDS
       DB[:users].update_one({user: user}, '$currentDate' => {lastLogin: true})
 
       return JWT.generate(user, remember_me)
+
+      nil
     end
 
     def register(user)
@@ -85,6 +87,8 @@ class MyMICDS
         subject: "#{new_user[:user]} just created a 2.0 account!",
         html: "#{new_user[:firstName]} #{new_user[:lastName]} (#{new_user[:gradYear]}) just created an account with the username #{new_user[:user]}"
       )
+
+      nil
     end
 
     def confirm(user, confirmation_hash)
@@ -100,6 +104,8 @@ class MyMICDS
       else
         raise Passwords::MismatchError, 'Confirmation hashes do not match!'
       end
+
+      nil
     end
   end
 end
