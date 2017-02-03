@@ -89,17 +89,17 @@ class MyMICDS
 
       ::JWT.encode(
         {
+          # payload
           user: user,
-          scopes: scopes
-        },
-        CONFIG['jwt']['secret'],
-        {
+          scopes: scopes,
+          # JWT metadata
           aud: CONFIG['hosted_on'],
           exp: Time.now.to_i + (remember_me ? 30.days : 12.hours),
           iat: Time.now.to_i,
           iss: CONFIG['hosted_on'],
           sub: 'MyMICDS API'
         },
+        CONFIG['jwt']['secret'],
         'HS256'
       )
     end

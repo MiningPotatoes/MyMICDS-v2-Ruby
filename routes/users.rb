@@ -26,10 +26,8 @@ class MyMICDS
         get '/info' do
           result = {}
           begin
-            Users.get_info(settings.db, request.env[:user], true) do |info|
-              result[:error] = nil
-              result[:user_info] = info
-            end
+            result[:error] = nil
+            result[:user_info] = Users.get_info(settings.db, request.env[:user], true)
           rescue => err
             result[:error] = err.message
             result[:user_info] = nil
