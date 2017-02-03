@@ -21,8 +21,6 @@ class MyMICDS
     end
 
     def get_info(db, user, private_info)
-      raise TypeError, 'invalid database connection' unless db.is_a?(Mongo::Client)
-
       # since Ruby doesn't have an overall Boolean class, we have to use this hack to check if boolean
       private_info = false unless !!private_info == private_info
 

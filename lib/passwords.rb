@@ -2,6 +2,7 @@ require 'active_support/security_utils'
 require 'bcrypt'
 require 'digest'
 require 'securerandom'
+
 require_relative 'mail'
 require_relative 'users'
 
@@ -27,6 +28,8 @@ class MyMICDS
     end
 
     def change(db, user, old_pass, new_pass)
+      # even though #matches? already has a password type check,
+      # the message isn't informative enough
       raise TypeError, 'invalid old password' unless old_pass.is_a?(String)
       raise ArgumentError, 'password blacklisted' if BLACKLIST.include?(old_pass)
       raise TypeError, 'invalid new password' unless new_pass.is_a?(String)
