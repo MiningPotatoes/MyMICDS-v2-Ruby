@@ -1,3 +1,4 @@
+require 'active_support/security_utils'
 require 'bcrypt'
 require 'digest'
 require 'securerandom'
@@ -11,7 +12,10 @@ class MyMICDS
       'Michael is not a nerd' # Michael i will fight you
     ]
 
-    MismatchError = Class.new(StandardError)
+    Error = Class.new(StandardError)
+
+    MismatchError = Class.new(Error)
+    EmailNotSentError = Class.new(Error)
 
     module_function
 
@@ -27,14 +31,12 @@ class MyMICDS
       raise ArgumentError, 'password blacklisted' if BLACKLIST.include?(old_pass)
       raise TypeError, 'invalid new password' unless new_pass.is_a?(String)
 
-      hashed = BCrypt::Password.create(new_pass)
-
       matches, confirmed = matches?(db, user, old_pass)
       raise MismatchError, 'passwords do not match' unless matches
 
       db[:users].update_one(
         {user: user},
-        '$set' => {password: hashed},
+        '$set' => {password: BCrypt::Password.create(new_pass)},
         '$currentDate' => {lastPasswordChange: true}
       )
 
@@ -45,11 +47,10 @@ class MyMICDS
       user_doc = Users.get(db, user)
 
       reset_hash = SecureRandom.hex(16)
-      reset_hashed_hash = Digest::SHA256.hexdigest(reset_hash)
 
       db[:users].update_one(
         {user: user_doc[:user]},
-        {'$set' => {passwordChangeHash: reset_hashed_hash}},
+        {'$set' => {passwordChangeHash: Digest::SHA256.hexdigest(reset_hash)}},
         {upsert: true}
       )
 
@@ -67,8 +68,29 @@ class MyMICDS
       nil
     end
 
-    def reset(db, user, password, hash)
-      # TODO
+    def reset(db, user, password, reset_hash)
+      raise TypeError, 'invalid password' unless password.is_a?(String)
+      raise ArgumentError, 'password blacklisted' if BLACKLIST.include?(password)
+      raise TypeError, 'invalid reset hash' unless reset_hash.is_a?(String)
+
+      user_doc = Users.get(db, user)
+
+      db_hash = user_doc[:password_change_hash]
+      hash_check = Digest::SHA256.hexdigest(reset_hash)
+
+      raise EmailNotSentError, 'password reset email never sent' if !db_hash.is_a?(String) || db_hash.nil?
+      raise MismatchError, 'password reset hashes do not match' unless ActiveSupport::SecurityUtils.secure_compare(db_hash, hash_check)
+
+      db[:users].update_one(
+        {user: user_doc[:user]},
+        '$set' => {
+          password: BCrypt::Password.create(password),
+          passwordChangeHash: nil
+        },
+        '$currentDate' => {lastPasswordChange: true}
+      )
+
+      nil
     end
   end
 end
