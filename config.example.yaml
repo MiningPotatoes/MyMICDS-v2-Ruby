@@ -1,6 +1,6 @@
 ---
 # This document is where all the sensitive data is stored.
-# DO NOT MODIFY THIS DOCUMENT. Instead, create a 'config.yml' with the filled out information.
+# DO NOT MODIFY THIS DOCUMENT. Instead, create a 'config.yaml' with the filled out information.
   hosted_on: http://localhost:1420 # Used for JWT signing
   production: false
 

@@ -10,7 +10,7 @@ require 'yaml'
 Mongo::Logger.logger.level = ::Logger::FATAL
 
 class MyMICDS < Sinatra::Base
-  CONFIG = YAML.load_file(File.expand_path('../config.yml', __FILE__))
+  CONFIG = YAML.load_file(File.expand_path('../config.yaml', __FILE__))
   DB = Mongo::Client.new(CONFIG['mongodb']['uri'])
 
   configure do
