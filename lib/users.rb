@@ -87,7 +87,7 @@ class MyMICDS
     end
 
     def grad_year_to_grade(grad_year)
-      return nil unless grad_year.is_a?(Integer)
+      return unless grad_year.is_a?(Integer)
 
       current = Time.now
       year_diff = current.year - grad_year
@@ -99,7 +99,7 @@ class MyMICDS
     end
 
     def grade_to_grad_year(grade)
-      return nil unless grade.is_a?(Integer)
+      return unless grade.is_a?(Integer)
 
       current = Time.now
 
