@@ -109,6 +109,7 @@ class MyMICDS
             raise
           rescue => err
             result[:error] = err.message
+            status 400
           end
           json(result)
         end
@@ -126,6 +127,7 @@ class MyMICDS
               raise
             rescue => err
               result[:error] = err.message
+              status 400
             end
           end
 
@@ -145,6 +147,7 @@ class MyMICDS
               raise
             rescue => err
               result[:error] = err.message
+              status 400
             end
           end
 

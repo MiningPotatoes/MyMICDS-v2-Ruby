@@ -31,8 +31,13 @@ class MyMICDS < Sinatra::Base
     end
   end
 
-  error Mongo::Error do    
+  error Mongo::Error do
+    status 500
     json({error: 'There was an error accessing the database!'})
+  end
+
+  error 404 do
+    json({error: 'Endpoint not found!'})
   end
 
   # all errors except Mongo::Error should be handled in the routes
