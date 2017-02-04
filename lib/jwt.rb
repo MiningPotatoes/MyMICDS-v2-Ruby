@@ -45,15 +45,7 @@ class MyMICDS
 
           env[:jwt] = payload
         else
-          env[:jwt] = false
-
-          # this is a singleton method
-          # calling `request.env[:jwt]['something']` will always return nil
-          class << env[:jwt]
-            def [](*args)
-              nil
-            end
-          end
+          env[:jwt] = {}
         end
 
         @app.call(env)
