@@ -9,7 +9,7 @@ class MyMICDS
         post '/login' do
           result = {}
 
-          if request.env[:user]
+          unless request.env[:jwt].empty?
             result[:error] = nil
             result[:jwt] = nil
             result[:message] = 'You\'re already logged in, silly!'
@@ -20,7 +20,7 @@ class MyMICDS
 
             begin
               result[:error] = nil
-              result[:jwt] = Auth.login(params['user'], params['password'], remember_me)
+              result[:jwt] = Auth.login(*params.values_at('user', 'password'), remember_me)
               result[:message] = 'Success!'
               result[:success] = true
             rescue Mongo::Error
@@ -86,12 +86,66 @@ class MyMICDS
           result = {}
 
           begin
-            Auth.confirm(params['user'], params['hash'])
+            Auth.confirm(*params.values_at('user', 'hash'))
           rescue Mongo::Error
             raise
           rescue => err
             result[:error] = err.message
             status 400
+          end
+
+          json(result)
+        end
+      end
+
+      app.namespace '/password' do
+        patch '' do
+          result = {}
+
+          begin
+            Passwords.change(request.env[:jwt]['user'], *params.values_at('oldPassword', 'newPassword'))
+            result[:error] = nil
+          rescue Mongo::Error
+            raise
+          rescue => err
+            result[:error] = err.message
+          end
+          json(result)
+        end
+
+        put '' do
+          result = {}
+
+          if request.env[:jwt]['user']
+            result[:error] = 'You\'re already logged in, silly!'
+          else
+            begin
+              Passwords.reset(*params.values_at('user', 'password', 'hash'))
+              result[:error] = nil
+            rescue Mongo::Error
+              raise
+            rescue => err
+              result[:error] = err.message
+            end
+          end
+
+          json(result)
+        end
+
+        post '/forgot' do
+          result = {}
+
+          if request.env[:jwt]['user']
+            result[:error] = 'You\'re already logged in, silly!'
+          else
+            begin
+              Passwords.send_reset_email(params['user'])
+              result[:error] = nil
+            rescue Mongo::Error
+              raise
+            rescue => err
+              result[:error] = err.message
+            end
           end
 
           json(result)
