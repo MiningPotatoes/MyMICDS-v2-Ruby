@@ -20,7 +20,7 @@ class MyMICDS
         # we have our own way of handling if the user is authorized or not
         # so it's okay if there's no JWT header
         # we'll just have to skip to the end
-        if !env['HTTP_AUTHORIZATION'].nil?
+        unless env['HTTP_AUTHORIZATION'].nil?
           bearer, token = env['HTTP_AUTHORIZATION'].split(' ')
           raise ArgumentError, 'invalid format (must be "Bearer [token]")' unless bearer == 'Bearer'
 
@@ -44,6 +44,16 @@ class MyMICDS
           raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(payload, token)
 
           env[:jwt] = payload
+        else
+          env[:jwt] = false
+
+          # this is a singleton method
+          # calling `request.env[:jwt]['something']` will always return nil
+          class << env[:jwt]
+            def [](*args)
+              nil
+            end
+          end
         end
 
         @app.call(env)

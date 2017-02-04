@@ -14,7 +14,7 @@ class MyMICDS < Sinatra::Base
   DB = Mongo::Client.new(CONFIG['mongodb']['uri'])
 
   configure do
-    disable :protection
+    disable :protection, :raise_errors, :show_exceptions
 
     require_relative 'lib/jwt'
     use JWT::Middleware
