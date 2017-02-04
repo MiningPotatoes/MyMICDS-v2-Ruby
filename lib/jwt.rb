@@ -83,7 +83,7 @@ class MyMICDS
           # payload
           user: user,
           scopes: scopes,
-          # JWT metadata
+          # JWT claims
           aud: CONFIG['hosted_on'],
           exp: Time.now.to_i + (remember_me ? 30.days : 12.hours),
           iat: Time.now.to_i,

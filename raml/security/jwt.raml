@@ -1,0 +1,41 @@
+#%RAML 1.0 SecurityScheme
+---
+description: |
+  This is an implementation of the [JSON Web Token](https://jwt.io/) standard using the [`jwt`](https://github.com/jwt/ruby-jwt) Ruby gem.
+type: x-jwt
+describedBy:
+  headers:
+    Authorization:
+      description: |
+        A JWT containing:
+        - A username under the `user` key
+        - An array of scopes under the `scopes` key
+        - JWT claims
+          - `aud`
+          - `exp`
+          - `iat`
+          - `iss`
+          - `sub`
+
+        The actual header is formatted `Bearer {JWT}`, and will be rejected if not properly formatted.
+      pattern: ^Bearer [\w-.]+$
+      example: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1N (etc) # etc. this is not actually valid.
+  responses:
+    400:
+      body:
+        description: |
+          This response is only returned when the format of the JWT is invalid.
+        properties:
+          error:
+        example:
+          error: |
+            ArgumentError: invalid format (must be "Bearer [token]")
+    401:
+      body:
+        description: |
+          This response is returned whenever something goes wrong with the actual decoding of the JWT.
+        properties:
+          error:
+        example:
+          error: |
+            JWT::ExpiredSignature: Signature has expired

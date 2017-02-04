@@ -1,0 +1,18 @@
+#%RAML 1.0
+---
+title: MyMICDS API
+version: v2
+baseUri: http://localhost:1420
+mediaType: application/json
+securitySchemes:
+  jwt: !include security/jwt.raml
+securedBy: [ jwt ]
+
+/auth:
+  # TODO
+
+/password:
+  # TODO
+
+/user:
+  # TODO
