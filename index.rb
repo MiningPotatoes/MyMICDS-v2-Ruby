@@ -24,6 +24,7 @@ class MyMICDS < Sinatra::Base
 
     %w(
       auth
+      lunch
       users
     ).each do |section|
       require_relative "routes/#{section}"
