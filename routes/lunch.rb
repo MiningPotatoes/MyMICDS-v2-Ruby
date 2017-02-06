@@ -7,11 +7,10 @@ class MyMICDS
         current = Time.now
         result = {}
 
-        date_vals = {}
         date_fields = %w(year month day)
 
-        date_fields.each do |key|
-          date_vals[key] = params[key] || current.send(key)
+        date_vals = date_fields.each_with_object({}) do |key, memo|
+          memo[key] = params[key] || current.send(key)
         end
 
         begin

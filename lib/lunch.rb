@@ -61,7 +61,7 @@ class MyMICDS
               json[date_str][filter.call(school)]['categories'] ||= {}
               json[date_str][filter.call(school)]['categories'][category_title] ||= []
 
-              food.each {|f| json[date_str][filter.call(school)]['categories'][category_title] << f}
+              json[date_str][filter.call(school)]['categories'][category_title].concat(food)
             end
           end
         end
