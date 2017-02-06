@@ -33,7 +33,6 @@ class MyMICDS
       if private_info
         # programmatically validate these since it looks really ugly when done manually
         %w(canvasURL portalURL).each do |key|
-          next if user_doc[key].nil?
           user_info[key] = user_doc[key].is_a?(String) ? user_doc[key] : nil
         end
       end
