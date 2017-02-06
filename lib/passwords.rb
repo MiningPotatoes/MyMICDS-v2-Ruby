@@ -24,7 +24,7 @@ class MyMICDS
       raise TypeError, 'invalid password' unless password.is_a?(String)
 
       user_doc = Users.get(user)
-      return BCrypt::Password.new(user_doc[:password]) == password, user_doc[:confirmed]
+      return BCrypt::Password.new(user_doc['password']) == password, user_doc['confirmed']
     end
 
     def change(user, old_pass, new_pass)
@@ -52,19 +52,19 @@ class MyMICDS
       reset_hash = SecureRandom.hex(16)
 
       DB[:users].update_one(
-        {user: user_doc[:user]},
+        {user: user_doc['user']},
         {'$set' => {passwordChangeHash: Digest::SHA256.hexdigest(reset_hash)}},
         {upsert: true}
       )
 
       Mail.send_erb(
-        user_doc[:user] + '@micds.org',
+        user_doc['user'] + '@micds.org',
         'Change your password',
         File.expand_path('../../erb/password.erb', __FILE__),
         {
-          first_name: user_doc[:first_name],
-          last_name: user_doc[:last_name],
-          password_link: "https://mymicds.net/reset-password/#{user_doc[:user]}/#{reset_hash}"
+          first_name: user_doc['firstName'],
+          last_name: user_doc['lastName'],
+          password_link: "https://mymicds.net/reset-password/#{user_doc['user']}/#{reset_hash}"
         }
       )
 
@@ -78,14 +78,14 @@ class MyMICDS
 
       user_doc = Users.get(user)
 
-      db_hash = user_doc[:password_change_hash]
+      db_hash = user_doc['passwordChangeHash']
       hash_check = Digest::SHA256.hexdigest(reset_hash)
 
       raise EmailNotSentError, 'password reset email never sent' if !db_hash.is_a?(String) || db_hash.nil?
       raise MismatchError, 'password reset hashes do not match' unless ActiveSupport::SecurityUtils.secure_compare(db_hash, hash_check)
 
       DB[:users].update_one(
-        {user: user_doc[:user]},
+        {user: user_doc['user']},
         '$set' => {
           password: BCrypt::Password.create(password),
           passwordChangeHash: nil

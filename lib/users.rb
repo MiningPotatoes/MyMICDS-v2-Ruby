@@ -1,4 +1,3 @@
-require 'active_support/core_ext/hash/keys'
 require 'active_support/core_ext/numeric/time'
 require 'active_support/core_ext/time'
 
@@ -14,7 +13,7 @@ class MyMICDS
       user_docs = DB[:users].find(user: user).to_a
       raise UserNotFoundError, "user #{user} not found in database" if user_docs.empty?
 
-      user_docs[0].transform_keys {|k| k.underscore.to_sym}
+      user_docs[0]
     end
 
     def get_info(user, private_info)
@@ -24,16 +23,16 @@ class MyMICDS
       user_doc = get_user(user)
 
       # move values over from database and format them
-      user_info = %i(user first_name last_name grad_year).each_with_object({}) do |key, memo|
+      user_info = %w(user firstName lastName gradYear).each_with_object({}) do |key, memo|
         memo[key] = user_doc[key]
       end
-      user_info[:password] = 'Hunter2' # FIXME: shows up as '*******' for me? 
-      user_info[:grade] = grad_year_to_grade(user_info[:grad_year])
-      user_info[:school] = grade_to_school(user_info[:grade])
+      user_info['password'] = 'Hunter2' # FIXME: shows up as '*******' for me? 
+      user_info['grade'] = grad_year_to_grade(user_info['gradYear'])
+      user_info['school'] = grade_to_school(user_info['grade'])
 
       if private_info
         # programmatically validate these since it looks really ugly when done manually
-        %i(canvas_url portal_url).each do |key|
+        %w(canvasURL portalURL).each do |key|
           next if user_doc[key].nil?
           user_info[key] = user_doc[key].is_a?(String) ? user_doc[key] : nil
         end
@@ -46,25 +45,15 @@ class MyMICDS
       raise TypeError, 'invalid update information' unless info.is_a?(Hash)
       return if info.empty?
 
-      set = %i(first_name last_name).each_with_object({}) do |key, memo|
+      set = %w(firstName lastName).each_with_object({}) do |key, memo|
         memo[key] = info[key] if info[key].is_a?(String)
       end
 
-      if info[:grad_year].is_a?(Integer)
-        set[:grad_year] = info[:grad_year]
+      if info['gradYear'].is_a?(Integer)
+        set['gradYear'] = info['gradYear']
       end
 
       return if set.empty?
-
-      # convert back to strings and camel case keys
-      # to keep compatibility with the JS API
-      set.transform_keys! do |k|
-        case k
-        when :canvas_url then 'canvasURL'
-        when :portal_url then 'portalURL'
-        else k.to_s.camelize(:lower)
-        end
-      end
 
       DB[:users].update_one(
         {user: user},

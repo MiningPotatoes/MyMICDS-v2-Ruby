@@ -1,4 +1,5 @@
 require 'active_support/security_utils'
+require 'active_support/core_ext/string/inflections'
 require 'bcrypt'
 require 'securerandom'
 
@@ -37,29 +38,29 @@ class MyMICDS
     def register(user)
       raise TypeError, 'invalid user hash' unless user.is_a?(Hash)
 
-      user[:user] = user[:user].downcase if user[:user].is_a?(String)
-      %i(first_name last_name).each do |key|
-        raise TypeError, "invalid #{key.to_s.tr('_', ' ')}" unless user[key].is_a?(String)
+      user['user'] = user['user'].downcase if user['user'].is_a?(String)
+      %w(firstName lastName).each do |key|
+        raise TypeError, "invalid #{key.underscore.tr('_', ' ')}" unless user[key].is_a?(String)
       end
-      user[:grad_year] = nil unless user[:grad_year].is_a?(Integer)
+      user['gradYear'] = nil unless user['gradYear'].is_a?(Integer)
 
       # Users::get *should* raise an error if the user is not found
       # if there isn't an error, that means the user was found, so check for confirmation
       begin
-        user_doc = Users.get(user[:user])
+        user_doc = Users.get(user['user'])
       rescue Users::UserNotFoundError
       else
-        raise AlreadyRegistered, "An account is already registered under the email #{user[:user]}@micds.org!" if user_doc[:confirmed]
+        raise AlreadyRegistered, "An account is already registered under the email #{user['user']}@micds.org!" if user_doc['confirmed']
       end
 
       confirmation_hash = SecureRandom.hex(16)
 
       new_user = {
-        user: user[:user],
-        password: BCrypt::Password.create(user[:password]),
-        firstName: user[:first_name],
-        lastName: user[:last_name],
-        gradYear: user[:grad_year],
+        user: user['user'],
+        password: BCrypt::Password.create(user['password']),
+        firstName: user['firstName'],
+        lastName: user['lastName'],
+        gradYear: user['gradYear'],
         confirmed: false,
         registered: Time.now,
         confirmationHash: confirmation_hash,
@@ -96,7 +97,7 @@ class MyMICDS
 
       user_doc = Users.get(user)
 
-      if ActiveSupport::SecurityUtils.secure_compare(confirmation_hash, user_doc[:confirmation_hash])
+      if ActiveSupport::SecurityUtils.secure_compare(confirmation_hash, user_doc['confirmationHash'])
         DB[:users].update_one(
           {user: user},
           '$set' => {confirmed: true}

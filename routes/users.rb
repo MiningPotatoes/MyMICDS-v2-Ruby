@@ -1,4 +1,3 @@
-require 'active_support/core_ext/string/inflections'
 require 'time'
 
 require_relative '../lib/users'
@@ -29,12 +28,12 @@ class MyMICDS
 
           begin
             result[:error] = nil
-            result[:user_info] = Users.get_info(request.env[:jwt]['user'], true)
+            result[:user] = Users.get_info(request.env[:jwt]['user'], true)
           rescue Mongo::Error
             raise
           rescue => err
             result[:error] = err.message
-            result[:user_info] = nil
+            result[:user] = nil
             status 400
           end
 
@@ -47,9 +46,9 @@ class MyMICDS
           
           # programmatically assign these values because it's ugly when done manually
           %w(firstName lastName).each do |key|
-            info[key.underscore.to_sym] = params[key] if params[key].is_a?(String) && !params[key].empty?
+            info[key] = params[key] if params[key].is_a?(String) && !params[key].empty?
           end
-          info[:grad_year] = params['teacher'] ? nil : params['gradYear'].to_i
+          info['gradYear'] = params['teacher'] ? nil : params['gradYear'].to_i
 
           begin
             Users.change_info(request.env[:jwt]['user'], info)
