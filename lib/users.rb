@@ -57,7 +57,7 @@ class MyMICDS
       DB[:users].update_one(
         {user: user},
         {'$set' => set},
-        {upsert: true}
+        upsert: true
       )
 
       nil

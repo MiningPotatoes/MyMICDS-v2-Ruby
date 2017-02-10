@@ -70,7 +70,7 @@ class MyMICDS
       DB[:users].update_one(
         {user: new_user[:user]},
         new_user,
-        {upsert: true}
+        upsert: true
       )
 
       Mail.send_erb(

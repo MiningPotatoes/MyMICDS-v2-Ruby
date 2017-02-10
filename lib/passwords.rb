@@ -54,7 +54,7 @@ class MyMICDS
       DB[:users].update_one(
         {user: user_doc['user']},
         {'$set' => {passwordChangeHash: Digest::SHA256.hexdigest(reset_hash)}},
-        {upsert: true}
+        upsert: true
       )
 
       Mail.send_erb(
