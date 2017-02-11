@@ -38,7 +38,6 @@ class MyMICDS < Sinatra::Base
   end
 
   not_found do
-    status 404
     json({error: 'Endpoint not found!'})
   end
 
