@@ -12,6 +12,9 @@ You also have to set up a local config file on every machine. This file contains
 ## Running
 Just run the `rackup` command in this directory (provided you have `rack` installed) to start the server.
 
+## Wait, why are you throwing errors if a user, teacher, etc. isn't found?
+If you take a look at the `routes` files, *all* the errors are caught and the message is displayed. If I did something like returning `false`, I would have to add special clauses. Besides, if you look at the JavaScript API, an error is placed in the callback anyway, so it's still relatively consistent.
+
 ## TODO
 - `rdoc` file documentation
 - [RAML](http://raml.org/) API documentation
