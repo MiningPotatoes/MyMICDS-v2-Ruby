@@ -56,37 +56,37 @@ class MyMICDS
       confirmation_hash = SecureRandom.hex(16)
 
       new_user = {
-        user: user['user'],
-        password: BCrypt::Password.create(user['password']),
-        firstName: user['firstName'],
-        lastName: user['lastName'],
-        gradYear: user['gradYear'],
-        confirmed: false,
-        registered: Time.now,
-        confirmationHash: confirmation_hash,
-        scopes: []
+        'user' => user['user'],
+        'password' => BCrypt::Password.create(user['password']),
+        'firstName' => user['firstName'],
+        'lastName' => user['lastName'],
+        'gradYear' => user['gradYear'],
+        'confirmed' => false,
+        'registered' => Time.now,
+        'confirmationHash' => confirmation_hash,
+        'scopes' => []
       }
 
       DB[:users].update_one(
-        {user: new_user[:user]},
+        {user: new_user['user']},
         new_user,
         upsert: true
       )
 
       Mail.send_erb(
-        new_user[:user] + '@micds.org',
+        new_user['user'] + '@micds.org',
         'Confirm your Account',
         File.expand_path('../../erb/register.erb', __FILE__),
         {
-          first_name: new_user[:firstName],
-          last_name: new_user[:lastName],
-          confirm_link: "https://mymicds.net/confirm/#{new_user[:user]}/#{confirmation_hash}"
+          first_name: new_user['firstName'],
+          last_name: new_user['lastName'],
+          confirm_link: "https://mymicds.net/confirm/#{new_user['user']}/#{confirmation_hash}"
         }
       )
 
       Admins.send_email(
-        subject: "#{new_user[:user]} just created a 2.0 account!",
-        html: "#{new_user[:firstName]} #{new_user[:lastName]} (#{new_user[:gradYear]}) just created an account with the username #{new_user[:user]}"
+        subject: "#{new_user['user']} just created a 2.0 account!",
+        html: "#{new_user['firstName']} #{new_user['lastName']} (#{new_user['gradYear']}) just created an account with the username #{new_user['user']}"
       )
 
       nil
