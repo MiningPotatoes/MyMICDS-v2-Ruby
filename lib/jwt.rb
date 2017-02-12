@@ -17,6 +17,8 @@ class MyMICDS
       end
 
       def call(env)
+        env[:jwt] = {}
+
         # we have our own way of handling if the user is authorized or not
         # so it's okay if there's no JWT header
         # we'll just have to skip to the end
@@ -44,8 +46,6 @@ class MyMICDS
           raise ::JWT::TokenRevoked, 'token has been revoked' if JWT.revoked?(payload, token)
 
           env[:jwt] = payload
-        else
-          env[:jwt] = {}
         end
 
         @app.call(env)
