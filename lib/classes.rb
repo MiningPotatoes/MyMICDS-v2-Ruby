@@ -12,7 +12,7 @@ class MyMICDS
     TYPES = %w(art english history math science spanish latin mandarin german french other)
 
     HEX_DIGIT = /[0-9A-F]/i
-    HEX_COLOR = /^##{"(#{HEX_DIGIT.to_s * 2})" * 3}/
+    HEX_COLOR = /^##{"(#{HEX_DIGIT.to_s * 2})" * 3}$/
     SHORT_COLOR = /^##{"(#{HEX_DIGIT})" * 3}$/
 
     module_function
