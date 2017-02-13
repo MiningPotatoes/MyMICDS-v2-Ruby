@@ -59,6 +59,8 @@ class MyMICDS
       DB[:teachers].find.to_a.in_groups(5, false).map do |group|
         Thread.new {group.each {|t| delete_teacher(t['_id'])}}
       end.each(&:join)
+
+      nil
     end
 
     class << self

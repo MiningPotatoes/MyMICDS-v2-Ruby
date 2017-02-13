@@ -24,10 +24,8 @@ class MyMICDS
 
       raise AlreadyExistsError, 'alias already exists for a class' if has_alias
 
-      classes = Classes.get(user)
-
       valid_class_obj = nil
-      classes.each do |klass|
+      Classes.get(user).each do |klass|
         if klass['_id'].to_s == class_id
           valid_class_obj = klass
           break
@@ -44,16 +42,54 @@ class MyMICDS
       ).inserted_id
     end
 
-    def list_aliases
-      # TODO
+    def list_aliases(user)
+      user_doc = Users.get(user)
+
+      alias_list = TYPES.each_with_object({}) {|t, m| m[t] = []}
+
+      DB[:aliases].find(user: user_doc['_id']).each do |the_alias|
+        alias_list[the_alias['type']] << the_alias unless alias_list[the_alias['type']].nil?
+      end
+
+      alias_list
     end
 
-    def map_aliases
-      # TODO
+    def map_aliases(user)
+      aliases, classes = [
+        Thread.new {list_aliases(user)},
+        Thread.new {Classes.get(user)}
+      ].map {|t| t.join.value}
+
+      class_map = classes.each_with_object({}) {|c, m| m[c['_id'].to_s] = c}
+
+      TYPES.each_with_object({}) do |type, memo|
+        memo[type] = {}
+
+        next unless aliases[type].is_a?(Array)
+        aliases[type].each do |the_alias|
+          memo[type][the_alias['classRemote']] = class_map[the_alias['classNative'].to_s]
+        end
+      end
     end
 
-    def delete_alias
-      # TODO
+    def delete_alias(user, type, alias_id)
+      raise ArgumentError, 'invalid alias type' unless TYPES.include?(type)
+
+      aliases = list_aliases(user)
+
+      valid_alias_id = nil
+      aliases[type].each do |the_alias|
+        if alias_id == the_alias['_id'].to_s
+          valid_alias_id = the_alias['_id']
+          break
+        end
+      end
+
+      raise ArgumentError, 'invalid alias id' unless valid_alias_id
+
+      DB[:aliases].delete_one(_id: valid_alias_id)
+
+      nil
     end
 
     def get_alias_class(user, type, class_input)
@@ -75,7 +111,29 @@ class MyMICDS
     end
 
     def delete_classless
-      # TODO
+      aliasdata = DB[:aliases]
+      classdata = DB[:classes]
+
+      aliases, classes = [
+        Thread.new {aliasdata.find.to_a},
+        Thread.new {classdata.find.to_a}
+      ].map {|t| t.join.value}
+
+      aliases.each do |the_alias|
+        valid_class = false
+        classes.each do |the_class|
+          if the_alias['classNative'] == the_class['_id']
+            valid_class = true
+            break
+          end
+        end
+
+        unless valid_class
+          aliasdata.delete_one(_id: the_alias['_id'], user: the_alias['user'])
+        end
+      end
+
+      nil
     end
 
     class << self
