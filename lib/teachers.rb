@@ -23,8 +23,7 @@ class MyMICDS
         upsert: true
       )
 
-      # we have to return the teacher ObjectId since it's needed as an argument for the rest of these methods
-      teacherdata.find(teacher).to_a[0]['_id']
+      teacherdata.find(teacher).to_a[0]
     end
 
     def get_teacher(teacher_id)

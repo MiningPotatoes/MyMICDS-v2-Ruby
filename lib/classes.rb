@@ -11,10 +11,13 @@ class MyMICDS
     BLOCKS = %w(a b c d e f g sport other)
     TYPES = %w(art english history math science spanish latin mandarin german french other)
 
+    HEX_DIGIT = /[0-9A-F]/i
+    HEX_COLOR = /^##{"(#{HEX_DIGIT.to_s * 2})" * 3}/
+    SHORT_COLOR = /^##{"(#{HEX_DIGIT})" * 3}$/
+
     module_function
 
     def upsert_class(user, schedule_class)
-      raise TypeError, 'invalid username' unless user.is_a?(String)
       raise TypeError, 'invalid class hash' unless schedule_class.is_a?(Hash)
       raise TypeError, 'invalid class name' unless schedule_class['name'].is_a?(String)
       schedule_class['_id'] = '' unless schedule_class['_id'].is_a?(String)
@@ -23,7 +26,7 @@ class MyMICDS
       schedule_class['block'] = 'other' unless BLOCKS.include?(schedule_class['block'])
       schedule_class['type'] = 'other' unless TYPES.include?(schedule_class['type'])
 
-      unless /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/ =~ schedule_class['color']
+      unless /(#{HEX_COLOR})|(#{SHORT_COLOR})/ =~ schedule_class['color']
         # here at MyMICDS, we don't play around
         # cryptographically-generated colors are the pinnacle of human technology
         schedule_class['color'] = '#' + SecureRandom.hex(3)
@@ -34,7 +37,7 @@ class MyMICDS
       keys = %w(name color block type)
 
       user_doc = Users.get(user)
-      teacher_id = Teachers.add(schedule_class['teacher'])
+      teacher_id = Teachers.add(schedule_class['teacher'])['_id']
 
       classdata = DB[:classes]
 
@@ -92,7 +95,33 @@ class MyMICDS
     end
 
     def get_classes(user)
-      # TODO
+      user_doc = Users.get(user)
+
+      classes = DB[:classes].find(user: user_doc['_id']).each do |c|
+        # convert shorthand color to long form, convert to RGB values
+        rgb = c['color'].gsub(SHORT_COLOR, '#\1\1\2\2\3\3').match(HEX_COLOR).captures.map {|x| x.to_i(16)}
+
+        # ported from NPM `prisma` package
+        c['textDark'] = Math.sqrt(
+          ((rgb[0] ** 2) * 0.241) +
+          ((rgb[1] ** 2) * 0.691) +
+          ((rgb[2] ** 2) * 0.068)
+        ) >= 130
+      end.to_a
+
+      teachers_list = {}
+
+      classes.each do |klass|
+        klass['user'] = user_doc['user']
+
+        teacher_id = klass['teacher']
+
+        if teachers_list[teacher_id].nil?
+          teachers_list[teacher_id] = klass['teacher'] = Teachers.get(teacher_id)
+        else
+          klass['teacher'] = teachers_list[teacher_id]
+        end
+      end
     end
 
     def delete_class(user, class_id)
