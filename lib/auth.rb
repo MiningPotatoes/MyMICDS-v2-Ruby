@@ -95,9 +95,7 @@ class MyMICDS
     def confirm(user, confirmation_hash)
       raise TypeError, 'invalid confirmation hash' unless confirmation_hash.is_a?(String)
 
-      user_doc = Users.get(user)
-
-      if ActiveSupport::SecurityUtils.secure_compare(confirmation_hash, user_doc['confirmationHash'])
+      if ActiveSupport::SecurityUtils.secure_compare(confirmation_hash, Users.get(user)['confirmationHash'])
         DB[:users].update_one(
           {user: user},
           '$set' => {confirmed: true}

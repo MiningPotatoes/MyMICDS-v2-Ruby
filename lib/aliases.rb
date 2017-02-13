@@ -18,8 +18,6 @@ class MyMICDS
       raise TypeError, 'invalid class string' unless class_string.is_a?(String)
       raise TypeError, 'invalid class id' unless class_id.is_a?(String)
 
-      user_doc = Users.get(user)
-
       has_alias, class_obj = get_alias_class(user, type, class_string)
 
       raise AlreadyExistsError, 'alias already exists for a class' if has_alias
@@ -35,7 +33,7 @@ class MyMICDS
       raise ClassDNEError, 'native class does not exist' unless valid_class_obj
 
       DB[:aliases].insert_one(
-        user: user_doc['_id'],
+        user: Users.get(user)['_id'],
         type: type,
         classNative: valid_class_obj['_id'],
         classRemote: class_string
@@ -43,11 +41,9 @@ class MyMICDS
     end
 
     def list_aliases(user)
-      user_doc = Users.get(user)
-
       alias_list = TYPES.each_with_object({}) {|t, m| m[t] = []}
 
-      DB[:aliases].find(user: user_doc['_id']).each do |the_alias|
+      DB[:aliases].find(user: Users.get(user)['_id']).each do |the_alias|
         alias_list[the_alias['type']] << the_alias unless alias_list[the_alias['type']].nil?
       end
 
@@ -97,9 +93,7 @@ class MyMICDS
       # return the current value just in case it's already a class object
       return false, class_input unless class_input.is_a?(String)
 
-      user_doc = Users.get(user)
-
-      aliases = DB[:aliases].find(user: user_doc['_id'], type: type, classRemote: class_input).to_a
+      aliases = DB[:aliases].find(user: Users.get(user)['_id'], type: type, classRemote: class_input).to_a
       return false, class_input if aliases.empty?
 
       Classes.get(user).each do |klass|
@@ -111,6 +105,9 @@ class MyMICDS
     end
 
     def delete_classless
+      # normally, I wouldn't declare `classdata` since it's only used once
+      # but it looks really good because `aliasdata` and `classdata` are the same length
+      # so I will allow it just this once
       aliasdata = DB[:aliases]
       classdata = DB[:classes]
 

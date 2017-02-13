@@ -1,6 +1,7 @@
 require 'bson'
 require 'securerandom'
 
+require_relative 'aliases'
 require_relative 'teachers'
 require_relative 'users'
 
@@ -36,12 +37,12 @@ class MyMICDS
       # these keys get reused a couple times, so we'll declare them earlier
       keys = %w(name color block type)
 
-      user_doc = Users.get(user)
+      user_doc = Users.get(user)['_id']
       teacher_id = Teachers.add(schedule_class['teacher'])['_id']
 
       classdata = DB[:classes]
 
-      classes = classdata.find(user: user_doc['_id']).to_a
+      classes = classdata.find(user: user_id).to_a
 
       # let's check if there's a class that we're supposed to update
       valid_edit_id = false
@@ -80,7 +81,7 @@ class MyMICDS
       insert_class = {
         '_id' => id,
         'teacher' => teacher_id,
-        'user' => user_doc['_id']
+        'user' => user_id
       }
       keys.each {|key| insert_class[key] = schedule_class[key]}
 
@@ -125,7 +126,13 @@ class MyMICDS
     end
 
     def delete_class(user, class_id)
-      # TODO
+      DB[:classes].delete_one(
+        _id: BSON::ObjectId(class_id),
+        user: Users.get(user)['_id']
+      )
+
+      # metaprogramming ftw
+      [Teachers, Aliases].each(&:delete_classless)
     end
 
     class << self
