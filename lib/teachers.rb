@@ -1,3 +1,4 @@
+require 'active_support/core_ext/array/grouping'
 require 'active_support/core_ext/string/inflections'
 
 class MyMICDS
@@ -54,10 +55,11 @@ class MyMICDS
     end
 
     def delete_classless
-      # in the JS API, this is accomplished with some recursion BS
-      # because asynchrony or something
-      # but this is Ruby, so screw that
-      DB[:teachers].find.each {|t| delete_teacher(t['_id'])}
+      # in the JS API, this is accomplished with some recursion BS for maximum asynchrony
+      # but this is Ruby, so let's do some Real Actual Multithreading™
+      DB[:teachers].find.to_a.in_groups(10, false).map do |group|
+        Thread.new {group.each {|t| delete_teacher(t['_id'])}}
+      end.each(&:join)
     end
 
     class << self

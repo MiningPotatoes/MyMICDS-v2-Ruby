@@ -1,15 +1,94 @@
+require 'bson'
+require 'securerandom'
+
 require_relative 'teachers'
 require_relative 'users'
 
 class MyMICDS
   module Classes
+    DuplicateError = Class.new(StandardError)
+
     BLOCKS = %w(a b c d e f g sport other)
     TYPES = %w(art english history math science spanish latin mandarin german french other)
 
     module_function
 
     def upsert_class(user, schedule_class)
-      # TODO
+      raise TypeError, 'invalid username' unless user.is_a?(String)
+      raise TypeError, 'invalid class hash' unless schedule_class.is_a?(Hash)
+      raise TypeError, 'invalid class name' unless schedule_class['name'].is_a?(String)
+      schedule_class['_id'] = '' unless schedule_class['_id'].is_a?(String)
+
+      # default to other
+      schedule_class['block'] = 'other' unless BLOCKS.include?(schedule_class['block'])
+      schedule_class['type'] = 'other' unless TYPES.include?(schedule_class['type'])
+
+      unless /(^#[0-9A-F]{6}$)|(^#[0-9A-F]{3}$)/ =~ schedule_class['color']
+        # here at MyMICDS, we don't play around
+        # cryptographically-generated colors are the pinnacle of human technology
+        schedule_class['color'] = '#' + SecureRandom.hex(3)
+      end
+      schedule_class['color'].upcase!
+
+      # these keys get reused a couple times, so we'll declare them earlier
+      keys = %w(name color block type)
+
+      user_doc = Users.get(user)
+      teacher_id = Teachers.add(schedule_class['teacher'])
+
+      classdata = DB[:classes]
+
+      classes = classdata.find(user: user_doc['_id']).to_a
+
+      # let's check if there's a class that we're supposed to update
+      valid_edit_id = false
+      unless schedule_class['_id'].empty?
+        classes.each do |klass|
+          klass_id = klass['_id']
+
+          if schedule_class['_id'] == klass_id.to_s
+            valid_edit_id = klass_id
+            break
+          end
+        end
+      end
+
+      # now let's check for duplicate
+      dup_ids = classes.each_with_object([]) do |klass, memo|
+        if schedule_class.values_at(*keys) == klass.values_at(*keys) && teacher_id == klass['teacher']
+          memo << klass['_id']
+        end
+      end
+
+      # if there's any duplicates, panic and give up
+      unless dup_ids.empty?
+        # if the edit id is still valid, then it'll be fine
+        # the user could have just accidentally pressed 'save'
+        # in that case, there shouldn't be an error
+        if valid_edit_id
+          return schedule_class
+        else
+          raise DuplicateError, 'tried to insert a duplicate class'
+        end
+      end
+
+      id = valid_edit_id ? valid_edit_id : BSON::ObjectId.new
+
+      insert_class = {
+        '_id' => id,
+        'teacher' => teacher_id,
+        'user' => user_doc['_id']
+      }
+      keys.each {|key| insert_class[key] = schedule_class[key]}
+
+      classdata.update_one(
+        {_id: id},
+        insert_class,
+        upsert: true
+      )
+
+      Teachers.delete_classless
+      return insert_class
     end
 
     def get_classes(user)
