@@ -56,7 +56,7 @@ class MyMICDS
     def delete_classless
       # in the JS API, this is accomplished with some recursion BS for maximum asynchrony
       # but this is Ruby, so let's do some Real Actual Multithreading™
-      DB[:teachers].find.to_a.in_groups(10, false).map do |group|
+      DB[:teachers].find.to_a.in_groups(5, false).map do |group|
         Thread.new {group.each {|t| delete_teacher(t['_id'])}}
       end.each(&:join)
     end

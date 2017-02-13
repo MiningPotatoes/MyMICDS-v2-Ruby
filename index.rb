@@ -21,7 +21,7 @@ end
 
 class MyMICDS < Sinatra::Base
   CONFIG = YAML.load_file(File.expand_path('../config.yaml', __FILE__))
-  DB = Mongo::Client.new(CONFIG['mongodb']['uri'], wait_queue_timeout: 5)
+  DB = Mongo::Client.new(CONFIG['mongodb']['uri'])
 
   configure do
     disable :protection, :raise_errors, :show_exceptions
