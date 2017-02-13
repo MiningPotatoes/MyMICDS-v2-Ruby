@@ -1,5 +1,8 @@
 root = true
 
+[*]
+insert_final_newlines = true
+
 [**.{rb, raml}]
 indent_style = space
 indent_size = 2
