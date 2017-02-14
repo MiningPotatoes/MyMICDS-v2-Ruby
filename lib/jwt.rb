@@ -69,13 +69,13 @@ class MyMICDS
     end
 
     def generate(user, remember_me)
-      user_doc = Users.get(user)
+      user_scopes = Users.get(user)['scopes']
 
       # default scopes
       scopes = {pleb: true}
 
-      if user_doc['scopes'].is_a?(Array)
-        user_doc['scopes'].each {|scope| scopes[scope] = true}
+      if user_scopes.is_a?(Array)
+        user_scopes.each {|scope| scopes[scope] = true}
       end
 
       ::JWT.encode(

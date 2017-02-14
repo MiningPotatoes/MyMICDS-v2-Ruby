@@ -123,6 +123,7 @@ class MyMICDS
             begin
               Passwords.reset(*params.values_at('user', 'password', 'hash'))
               result[:error] = nil
+              status 201
             rescue Mongo::Error
               raise
             rescue => err

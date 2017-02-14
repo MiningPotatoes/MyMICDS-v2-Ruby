@@ -3,6 +3,7 @@ require 'active_support/core_ext/string/inflections'
 
 class MyMICDS
   module Teachers
+    FIELDS = %w(prefix firstName lastName)
     PREFIXES = %w(Mr. Mrs.)
     TeacherNotFoundError = Class.new(StandardError)
 
@@ -10,9 +11,10 @@ class MyMICDS
 
     def add_teacher(teacher)
       raise TypeError, 'invalid teacher hash' unless teacher.is_a?(Hash)
-      raise ArgumentError, 'invalid teacher prefix' unless PREFIXES.include?(teacher['prefix'])
-      %w(firstName lastName).each do |key|
+      FIELDS.each do |key|
         raise TypeError, "invalid #{key.underscore.tr('_', ' ')}" unless teacher[key].is_a?(String)
+
+      raise ArgumentError, 'invalid teacher prefix' unless PREFIXES.include?(teacher['prefix'])
       end
 
       teacherdata = DB[:teachers]

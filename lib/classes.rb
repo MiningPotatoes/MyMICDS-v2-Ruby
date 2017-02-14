@@ -1,6 +1,7 @@
 require 'bson'
 require 'securerandom'
 
+require_relative 'aliases'
 require_relative 'teachers'
 require_relative 'users'
 
@@ -9,6 +10,7 @@ class MyMICDS
     DuplicateError = Class.new(StandardError)
 
     BLOCKS = %w(a b c d e f g sport other)
+    FIELDS = %w(name color block type)
     TYPES = %w(art english history math science spanish latin mandarin german french other)
 
     HEX_DIGIT = /[0-9A-F]/i
@@ -33,15 +35,12 @@ class MyMICDS
       end
       schedule_class['color'].upcase!
 
-      # these keys get reused a couple times, so we'll declare them earlier
-      keys = %w(name color block type)
-
-      user_doc = Users.get(user)
+      user_doc = Users.get(user)['_id']
       teacher_id = Teachers.add(schedule_class['teacher'])['_id']
 
       classdata = DB[:classes]
 
-      classes = classdata.find(user: user_doc['_id']).to_a
+      classes = classdata.find(user: user_id).to_a
 
       # let's check if there's a class that we're supposed to update
       valid_edit_id = false
@@ -58,7 +57,7 @@ class MyMICDS
 
       # now let's check for duplicate
       dup_ids = classes.each_with_object([]) do |klass, memo|
-        if schedule_class.values_at(*keys) == klass.values_at(*keys) && teacher_id == klass['teacher']
+        if schedule_class.values_at(*FIELDS) == klass.values_at(*FIELDS) && teacher_id == klass['teacher']
           memo << klass['_id']
         end
       end
@@ -80,9 +79,9 @@ class MyMICDS
       insert_class = {
         '_id' => id,
         'teacher' => teacher_id,
-        'user' => user_doc['_id']
+        'user' => user_id
       }
-      keys.each {|key| insert_class[key] = schedule_class[key]}
+      FIELDS.each {|key| insert_class[key] = schedule_class[key]}
 
       classdata.update_one(
         {_id: id},
@@ -125,7 +124,13 @@ class MyMICDS
     end
 
     def delete_class(user, class_id)
-      # TODO
+      DB[:classes].delete_one(
+        _id: BSON::ObjectId(class_id),
+        user: Users.get(user)['_id']
+      )
+
+      # metaprogramming ftw
+      [Teachers, Aliases].each(&:delete_classless)
     end
 
     class << self
