@@ -33,7 +33,9 @@ class MyMICDS < Sinatra::Base
     register Sinatra::Namespace
 
     %w(
+      alias
       auth
+      classes
       lunch
       users
     ).each do |section|

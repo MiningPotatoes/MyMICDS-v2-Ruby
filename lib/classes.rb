@@ -10,6 +10,7 @@ class MyMICDS
     DuplicateError = Class.new(StandardError)
 
     BLOCKS = %w(a b c d e f g sport other)
+    FIELDS = %w(name color block type)
     TYPES = %w(art english history math science spanish latin mandarin german french other)
 
     HEX_DIGIT = /[0-9A-F]/i
@@ -34,9 +35,6 @@ class MyMICDS
       end
       schedule_class['color'].upcase!
 
-      # these keys get reused a couple times, so we'll declare them earlier
-      keys = %w(name color block type)
-
       user_doc = Users.get(user)['_id']
       teacher_id = Teachers.add(schedule_class['teacher'])['_id']
 
@@ -59,7 +57,7 @@ class MyMICDS
 
       # now let's check for duplicate
       dup_ids = classes.each_with_object([]) do |klass, memo|
-        if schedule_class.values_at(*keys) == klass.values_at(*keys) && teacher_id == klass['teacher']
+        if schedule_class.values_at(*FIELDS) == klass.values_at(*FIELDS) && teacher_id == klass['teacher']
           memo << klass['_id']
         end
       end
@@ -83,7 +81,7 @@ class MyMICDS
         'teacher' => teacher_id,
         'user' => user_id
       }
-      keys.each {|key| insert_class[key] = schedule_class[key]}
+      FIELDS.each {|key| insert_class[key] = schedule_class[key]}
 
       classdata.update_one(
         {_id: id},

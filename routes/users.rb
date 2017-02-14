@@ -53,6 +53,7 @@ class MyMICDS
           begin
             Users.change_info(request.env[:jwt]['user'], info)
             result[:error] = nil
+            status 201
           rescue Mongo::Error
             raise
           rescue => err
