@@ -4,6 +4,6 @@ root = true
 end_of_line = lf
 insert_final_newlines = true
 
-[**.{rb, raml}]
+[*.{rb, raml}]
 indent_style = space
 indent_size = 2
