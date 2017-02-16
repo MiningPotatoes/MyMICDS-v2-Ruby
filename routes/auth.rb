@@ -23,7 +23,7 @@ class MyMICDS
               result[:jwt] = Auth.login(*params.values_at('user', 'password'), remember_me)
               result[:message] = 'Success!'
               result[:success] = true
-            rescue Mongo::Error
+            rescue Mongo::Error, Mongo::Auth::Unauthorized
               raise
             rescue Auth::Error, Passwords::Error => err
               result[:error] = nil
@@ -49,7 +49,7 @@ class MyMICDS
           begin
             JWT.revoke(request.env[:jwt], request.env['HTTP_AUTHORIZATION']&.slice(7..-1))
             result[:error] = nil
-          rescue Mongo::Error
+          rescue Mongo::Error, Mongo::Auth::Unauthorized
             raise
           rescue => err
             result[:error] = err.message
@@ -87,7 +87,7 @@ class MyMICDS
 
           begin
             Auth.confirm(*params.values_at('user', 'hash'))
-          rescue Mongo::Error
+          rescue Mongo::Error, Mongo::Auth::Unauthorized
             raise
           rescue => err
             result[:error] = err.message
@@ -105,7 +105,7 @@ class MyMICDS
           begin
             Passwords.change(request.env[:jwt]['user'], *params.values_at('oldPassword', 'newPassword'))
             result[:error] = nil
-          rescue Mongo::Error
+          rescue Mongo::Error, Mongo::Auth::Unauthorized
             raise
           rescue => err
             result[:error] = err.message
@@ -124,7 +124,7 @@ class MyMICDS
               Passwords.reset(*params.values_at('user', 'password', 'hash'))
               result[:error] = nil
               status 201
-            rescue Mongo::Error
+            rescue Mongo::Error, Mongo::Auth::Unauthorized
               raise
             rescue => err
               result[:error] = err.message
@@ -144,7 +144,7 @@ class MyMICDS
             begin
               Passwords.send_reset_email(params['user'])
               result[:error] = nil
-            rescue Mongo::Error
+            rescue Mongo::Error, Mongo::Auth::Unauthorized
               raise
             rescue => err
               result[:error] = err.message

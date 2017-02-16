@@ -4,6 +4,7 @@ require 'rack/parser'
 require 'sinatra/base'
 require 'sinatra/json'
 require 'sinatra/namespace'
+require 'sinatra/reloader'
 require 'yaml'
 
 # because Mongo messages get annoying
@@ -31,6 +32,7 @@ class MyMICDS < Sinatra::Base
 
     use Rack::Parser
     register Sinatra::Namespace
+    register Sinatra::Reloader
 
     %w(
       alias
@@ -44,8 +46,7 @@ class MyMICDS < Sinatra::Base
     end
   end
 
-  error Mongo::Error do
-    status 500
+  error Mongo::Error, Mongo::Auth::Unauthorized do
     json({error: 'There was an error accessing the database!'})
   end
 

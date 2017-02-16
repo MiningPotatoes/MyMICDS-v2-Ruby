@@ -16,7 +16,7 @@ class MyMICDS
         begin
           result[:error] = nil
           result[:lunch] = Lunch.get(Time.new(*date_vals.values_at(*date_fields)))
-        rescue Mongo::Error
+        rescue Mongo::Error, Mongo::Auth::Unauthorized
           raise
         rescue => err
           result[:error] = err.message

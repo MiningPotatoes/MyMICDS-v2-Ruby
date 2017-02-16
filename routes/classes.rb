@@ -3,7 +3,7 @@ require_relative '../lib/classes'
 class MyMICDS
   module ClassesRoutes
     def self.registered(app)
-      post '/classes' do
+      app.post '/classes' do
         result = {}
         schedule_class = {
           '_id' => params[:id]
@@ -16,7 +16,7 @@ class MyMICDS
           Classes.upsert(request.env[:jwt]['user'], schedule_class)
           result[:error] = nil
           status 201
-        rescue Mongo::Error
+        rescue Mongo::Error, Mongo::Auth::Unauthorized
           raise
         rescue => err
           result[:error] = err.message
@@ -28,13 +28,13 @@ class MyMICDS
         json(result)
       end
 
-      get '/classes' do
+      app.get '/classes' do
         result = {}
 
         begin
           result[:classes] = Classes.get(request.env[:jwt]['user'])
           result[:error] = nil
-        rescue Mongo::Error
+        rescue Mongo::Error, Mongo::Auth::Unauthorized
           raise
         rescue => err
           result[:classes] = nil
@@ -45,13 +45,13 @@ class MyMICDS
         json(result)
       end
 
-      delete '/classes' do
+      app.delete '/classes' do
         result = {}
 
         begin
           Classes.delete(request.env[:jwt]['user'], params[:id])
           result[:error] = nil
-        rescue Mongo::Error
+        rescue Mongo::Error, Mongo::Auth::Unauthorized
           raise
         rescue => err
           result[:error] = err.message

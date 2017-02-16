@@ -29,7 +29,7 @@ class MyMICDS
           begin
             result[:error] = nil
             result[:user] = Users.get_info(request.env[:jwt]['user'], true)
-          rescue Mongo::Error
+          rescue Mongo::Error, Mongo::Auth::Unauthorized
             raise
           rescue => err
             result[:error] = err.message
@@ -54,7 +54,7 @@ class MyMICDS
             Users.change_info(request.env[:jwt]['user'], info)
             result[:error] = nil
             status 201
-          rescue Mongo::Error
+          rescue Mongo::Error, Mongo::Auth::Unauthorized
             raise
           rescue => err
             result[:error] = err.message
