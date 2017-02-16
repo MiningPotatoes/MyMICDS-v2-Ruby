@@ -16,11 +16,9 @@ class MyMICDS
             result[:success] = false
             status 400
           else
-            remember_me = !params['remember']
-
             begin
               result[:error] = nil
-              result[:jwt] = Auth.login(*params.values_at('user', 'password'), remember_me)
+              result[:jwt] = Auth.login(*params.values_at('user', 'password'), !params['remember'].nil?)
               result[:message] = 'Success!'
               result[:success] = true
             rescue Mongo::Error, Mongo::Auth::Unauthorized
