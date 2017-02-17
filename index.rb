@@ -21,7 +21,7 @@ module BSON
 end
 
 class MyMICDS < Sinatra::Base
-  CONFIG = YAML.load_file(File.expand_path('../config.yaml', __FILE__))
+  CONFIG = YAML.load_file(File.expand_path('config.yaml', __dir__))
   DB = Mongo::Client.new(CONFIG['mongodb']['uri'])
 
   configure do

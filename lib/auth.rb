@@ -76,7 +76,7 @@ class MyMICDS
       Mail.send_erb(
         new_user['user'] + '@micds.org',
         'Confirm your Account',
-        File.expand_path('../../erb/register.erb', __FILE__),
+        File.expand_path('../erb/register.erb', __dir__),
         {
           first_name: new_user['firstName'],
           last_name: new_user['lastName'],

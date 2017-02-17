@@ -60,7 +60,7 @@ class MyMICDS
       Mail.send_erb(
         user + '@micds.org',
         'Change your password',
-        File.expand_path('../../erb/password.erb', __FILE__),
+        File.expand_path('../erb/password.erb', __dir__),
         {
           first_name: user_doc['firstName'],
           last_name: user_doc['lastName'],
